@@ -59,6 +59,8 @@ def shuffle_data(X, y):
     np.random.shuffle(indices)
     return X[indices], y[indices]
 
+# ====================================================================================================
+
 # 激活函数
 def activation(X, activation):
     if activation == 'relu':
@@ -175,6 +177,8 @@ class BatchNormLayer:
 #             return grad_output * self.mask
 #         return grad_output
 
+# ====================================================================================================
+
 # 三层神经网络
 # 网络结构：输入 -> 全连接层 -> BN层 -> 全连接层 -> BN层 -> 全连接层 -> 输出
 class ThreeLayerNet:
@@ -211,6 +215,8 @@ class ThreeLayerNet:
         for layer in self.layers:
             if isinstance(layer, (BatchNormLayer)):
                 layer.mode = mode
+
+# ====================================================================================================
 
 # 模型深拷贝
 def model_copy(model):
@@ -326,12 +332,16 @@ def train(model, X_train, y_train, X_val, y_val,
         pickle.dump(best_model, f)  
     return best_model
 
+# ====================================================================================================
+
 # 测试函数
 def test(model, X_test, y_test):
     model.set_mode('test')
     y_hat = model.forward(X_test)
     accuracy = np.mean(np.argmax(y_hat, axis=1) == np.argmax(y_test, axis=1))
     return accuracy
+
+# ====================================================================================================
 
 # 评估参数组合
 def evaluate_params(params, X_train, y_train, X_val, y_val):
@@ -386,7 +396,9 @@ def parameter_search(X_train, y_train, X_val, y_val):
     print(f'\nBest Accuracy: {best_accuracy:.4f}')
     print('Best Parameters:', best_params)
     return best_params
-    
+
+# ====================================================================================================
+
 # 模型参数可视化
 def visualize_model_parameters(model_path):
     # 加载训练好的模型
@@ -423,6 +435,7 @@ def visualize_model_parameters(model_path):
     plt.savefig('D:/model_parameters.png')
     plt.close()
 
+# ====================================================================================================
 
 def main():
     data_dir = 'path_to_data'
