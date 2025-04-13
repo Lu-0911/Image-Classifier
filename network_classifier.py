@@ -306,23 +306,23 @@ def train(model, X_train, y_train, X_val, y_val,
     plt.ylabel('Tran_losses')
     plt.xlabel('Epining Loss')
     plt.title('Training Loss Curve')
-    plt.savefig('D:/py/train_loss.png')
+    plt.savefig('D:/train_loss.png')
     plt.close()
     plt.plot(val_losses)
     plt.ylabel('Val_losses')
     plt.xlabel('Epining Loss')
     plt.title('Validation Loss Curve')
-    plt.savefig('D:/py/val_loss.png')
+    plt.savefig('D:/val_loss.png')
     plt.close()
     plt.plot(accuracies)
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.title('Accuracy Curve')
-    plt.savefig('D:/py/val_acc.png')
+    plt.savefig('D:/val_acc.png')
     plt.close()
              
     # 保存最优模型
-    with open('D:/py/model.pkl', 'wb') as f:
+    with open('D:/model.pkl', 'wb') as f:
         pickle.dump(best_model, f)  
     return best_model
 
@@ -392,41 +392,35 @@ def visualize_model_parameters(model_path):
     # 加载训练好的模型
     with open(model_path, 'rb') as f:
         model = pickle.load(f)
-    
+        
     plt.figure(figsize=(15, 10))
     
     # 可视化全连接层权重分布
     plt.subplot(2, 3, 1)
-    plt.hist(model.fc1.W.flatten(), bins=50, alpha=0.7, label='FC1 Weights')
-    plt.hist(model.fc2.W.flatten(), bins=50, alpha=0.7, label='FC2 Weights')
-    plt.hist(model.fc3.W.flatten(), bins=50, alpha=0.7, label='FC3 Weights')
-    plt.title('Weight Distribution')
-    plt.legend()
-    
-    # 可视化BN层参数
+    plt.hist(model.fc1.W.flatten(), bins=50, alpha=0.7)
+    plt.title('FC1 Weight Distribution')
     plt.subplot(2, 3, 2)
-    plt.scatter(model.bn1.gamma.flatten(), model.bn1.beta.flatten(), alpha=0.6)
-    plt.title('BN1 Gamma-Beta Distribution')
-    plt.xlabel('Gamma'), plt.ylabel('Beta')
-    
+    plt.hist(model.fc2.W.flatten(), bins=50, alpha=0.7)
+    plt.title('FC2 Weight Distribution')
     plt.subplot(2, 3, 3)
-    plt.scatter(model.bn2.gamma.flatten(), model.bn2.beta.flatten(), alpha=0.6)
-    plt.title('BN2 Gamma-Beta Distribution')
-    plt.xlabel('Gamma'), plt.ylabel('Beta')
+    plt.hist(model.fc3.W.flatten(), bins=50, alpha=0.7)
+    plt.title('FC3 Weight Distribution')
     
-    # 权重热力图（取部分神经元）
+    # 权重热力图（截取部分）
     plt.subplot(2, 3, 4)
     plt.imshow(model.fc1.W[:50, :50], cmap='coolwarm', aspect='auto')
     plt.title('FC1 Weight Heatmap (Partial)')
     plt.colorbar()
-    
     plt.subplot(2, 3, 5)
     plt.imshow(model.fc2.W[:50, :50], cmap='coolwarm', aspect='auto')
     plt.title('FC2 Weight Heatmap (Partial)')
     plt.colorbar()
-    
+    plt.subplot(2, 3, 6)
+    plt.imshow(model.fc3.W[:, :], cmap='coolwarm', aspect='auto')
+    plt.title('FC3 Weight Heatmap (Partial)')
+    plt.colorbar()
     plt.tight_layout()
-    plt.savefig('D:/py/model_parameters.png')
+    plt.savefig('D:/model_parameters.png')
     plt.close()
 
 
@@ -450,7 +444,7 @@ def main():
     test_accuracy = test(model, X_test, y_test)
     print(f'Test Accuracy: {test_accuracy:.4f}')
     #模型可视化
-    visualize_model_parameters('D:/py/model.pkl')
+    # visualize_model_parameters('D:/py/model.pkl')
 
 if __name__ == '__main__':
     main()
