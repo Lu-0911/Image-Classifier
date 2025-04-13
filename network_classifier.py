@@ -96,6 +96,7 @@ class FullyConnectedLayer:
         self.input_size = input_size
         self.output_size = output_size
         self.activation = activation
+        # He初始化
         self.W = np.random.randn(input_size, output_size) * np.sqrt(2.0 / input_size)
         self.b = np.zeros((1, output_size))
 
