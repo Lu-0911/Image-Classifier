@@ -18,14 +18,17 @@ def load_cifar10_data(data_dir):
             y_train.append(data_dict[b'labels'])
     X_train = np.concatenate(X_train)
     y_train = np.concatenate(y_train)
+    
     # # 通过翻转和增加训练数据
     # X_train = np.concatenate((X_train, np.fliplr(X_train)))
     # y_train = np.concatenate((y_train, y_train))
+    
     # 加载测试数据
     with open(os.path.join(data_dir, 'test_batch'), 'rb') as f:
         data_dict = pickle.load(f, encoding='bytes')
         X_test = data_dict[b'data']
         y_test = data_dict[b'labels']
+        
     # 数据预处理
     X_train = X_train.astype('float32')
     X_test = X_test.astype('float32')
@@ -36,9 +39,11 @@ def load_cifar10_data(data_dir):
     # # 部分数据添加噪声
     # noise_mask = np.random.rand(X_train.shape[0]) < 0.5
     # X_train[noise_mask] += np.random.normal(0, 0.1, X_train[noise_mask].shape)
+    
     # 将标签转换为one-hot编码
     y_train = np.eye(10)[y_train]
     y_test = np.eye(10)[y_test]
+    
     # 划分验证集
     n_val = int(X_train.shape[0] * 0.1)
     X_train, y_train = shuffle_data(X_train, y_train)
@@ -93,13 +98,15 @@ class FullyConnectedLayer:
         self.activation = activation
         self.W = np.random.randn(input_size, output_size) * np.sqrt(2.0 / input_size)
         self.b = np.zeros((1, output_size))
-    
+
+    # 前向传播
     def forward(self, X):
         self.X = X
         self.z = np.dot(X, self.W) + self.b
         self.a = activation(self.z, self.activation)
         return self.a
-    
+
+    # 反向传播
     def backward(self, grad_output, learning_rate, lambda_):
         grad_a = grad_output * activation_derivative(self.z, self.activation)
         grad_W = np.dot(self.X.T, grad_a) / grad_a.shape[0]
@@ -121,7 +128,8 @@ class BatchNormLayer:
         self.beta = np.zeros((1, input_size))
         self.running_mean = np.zeros((1, input_size))
         self.running_var = np.ones((1, input_size))
-    
+        
+    # 前向传播
     def forward(self, X):
         if self.mode == 'train':
             self.batch_mean = np.mean(X, axis=0, keepdims=True)
@@ -135,7 +143,8 @@ class BatchNormLayer:
         self.std = np.sqrt(self.batch_var + self.eps)
         self.x_norm = self.x_centered / self.std
         return self.gamma * self.x_norm + self.beta
-    
+
+    #反向传播
     def backward(self, grad_output, learning_rate):        
         grad_xnorm = grad_output * self.gamma
         grad_var = np.sum(grad_xnorm * self.x_centered * (-0.5) * (self.batch_var + self.eps)**(-1.5), axis=0)
@@ -148,7 +157,7 @@ class BatchNormLayer:
         self.beta -= learning_rate * grad_beta
         return grad_x
 
-# # Dropout层
+# # Dropout层（性能提升不明显，未使用）
 # class DropoutLayer:
 #     def __init__(self, p=0.5, mode='train'):
 #         self.p = p
@@ -168,6 +177,7 @@ class BatchNormLayer:
 # 三层神经网络
 # 网络结构：输入 -> 全连接层 -> BN层 -> 全连接层 -> BN层 -> 全连接层 -> 输出
 class ThreeLayerNet:
+    # 初始化，调用FCN类和BN类
     def __init__(self, input_size, hidden_size1, hidden_size2, output_size, activation='relu'):
         self.fc1 = FullyConnectedLayer(input_size, hidden_size1, activation)
         self.bn1 = BatchNormLayer(hidden_size1)
@@ -178,6 +188,7 @@ class ThreeLayerNet:
         # self.layers = [self.fc1, self.fc2, self.fc3]
         self.activation = activation
         self.mode = 'train'
+        
     # 前向传播
     def forward(self, X, mode='train'):
         self.set_mode(mode)
@@ -186,6 +197,7 @@ class ThreeLayerNet:
         # 输出层使用softmax函数
         exp_X = np.exp(X - np.max(X, axis=1, keepdims=True))
         return exp_X / np.sum(exp_X, axis=1, keepdims=True)
+        
     # 反向传播以及参数更新
     def backward(self, grad, learning_rate, lambda_):
         for layer in reversed(self.layers):
@@ -244,6 +256,7 @@ def train(model, X_train, y_train, X_val, y_val,
             y_batch = y_train[start_idx:end_idx]
             # 前向传播
             y_hat = model.forward(X_batch, 'train')
+            
             # 交叉熵损失与L2正则化
             batch_loss = -np.mean(y_batch * np.log(y_hat + 1e-8)) 
             batch_loss += lambda_/ (2 * batch_size) * (np.sum(model.fc1.W ** 2) + 
@@ -251,8 +264,9 @@ def train(model, X_train, y_train, X_val, y_val,
             train_loss += batch_loss * (end_idx - start_idx) / n_samples
             # 反向传播以及参数更新
             grad = y_hat - y_batch
-            model.backward(grad, learning_rate, lambda_)
+            model.backward(grad, learning_rate, lambda_)    
         train_losses.append(train_loss)
+        
         # 验证和早停机制
         val_loss = -np.mean(y_val * np.log(model.forward(X_val, 'test') + 1e-8))
         val_losses.append(val_loss)
@@ -267,7 +281,8 @@ def train(model, X_train, y_train, X_val, y_val,
             if no_improve_count >= patience:
                 print('Early stopping triggered.')
                 break
-        # 学习率衰减
+                
+        # 学习率衰减（策略可选）
         # 指数衰减
         learning_rate *= decay_rate
         #阶梯衰减
@@ -304,6 +319,7 @@ def train(model, X_train, y_train, X_val, y_val,
     plt.title('Accuracy Curve')
     plt.savefig('D:/py/val_acc.png')
     plt.close()
+             
     # 保存最优模型
     with open('D:/py/model.pkl', 'wb') as f:
         pickle.dump(best_model, f)  
@@ -414,8 +430,8 @@ def visualize_model_parameters(model_path):
 
 
 def main():
-    data_dir = 'D:/py/cifar-10-batches-py'
-    (X_train, y_train), (X_val, y_val), (X_test, y_test) = load_cifar10_data(data_dir)
+    data_dir = 'path_to_data'
+    (X_train, y_train), (X_val, y_val), (X_test, y_test) = load_cifar10_data(path_to_data)
 
     # # 超参数查找
     # best_params = parameter_search(X_train, y_train, X_val, y_val)
@@ -432,7 +448,7 @@ def main():
     # 测试模型
     test_accuracy = test(model, X_test, y_test)
     print(f'Test Accuracy: {test_accuracy:.4f}')
-
+    #模型可视化
     visualize_model_parameters('D:/py/model.pkl')
 
 if __name__ == '__main__':
